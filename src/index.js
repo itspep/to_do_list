@@ -2,6 +2,7 @@ import './styles.css';
 import { Project } from './modules/project.js';
 import { Storage } from './modules/storage.js';
 import { UI } from './modules/ui.js';
+import { Todo } from './modules/todo.js'; // Import Todo class
 
 class TodoApp {
   constructor() {
@@ -18,11 +19,13 @@ class TodoApp {
   }
 
   loadProjects() {
-    const savedProjects = Storage.loadProjects();
+    // Pass the classes as parameters to avoid circular imports
+    const savedProjects = Storage.loadProjects(Project, Todo);
     if (savedProjects && savedProjects.length > 0) {
       this.projects = savedProjects;
       this.currentProjectId = this.projects[0].id;
     } else {
+      // Create default project
       const defaultProject = new Project('Default Project');
       this.projects.push(defaultProject);
       this.currentProjectId = defaultProject.id;
