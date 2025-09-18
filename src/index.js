@@ -1,7 +1,7 @@
 import './styles.css';
-import { Project } from '../modules/project.js';
-import { Storage } from '../modules/storage.js';
-import { UI } from '../modules/ui.js';
+import { Project } from './modules/project.js';
+import { Storage } from './modules/storage.js';
+import { UI } from './modules/ui.js';
 
 class TodoApp {
   constructor() {
@@ -13,6 +13,7 @@ class TodoApp {
   init() {
     this.loadProjects();
     this.setupEventListeners();
+    this.setupModalListeners();
     this.render();
   }
 
@@ -22,7 +23,6 @@ class TodoApp {
       this.projects = savedProjects;
       this.currentProjectId = this.projects[0].id;
     } else {
-      // Create default project
       const defaultProject = new Project('Default Project');
       this.projects.push(defaultProject);
       this.currentProjectId = defaultProject.id;
@@ -31,25 +31,111 @@ class TodoApp {
   }
 
   setupEventListeners() {
+    // Button event listeners
     document.getElementById('new-project-btn').addEventListener('click', () => {
-      this.addProject();
+      UI.showProjectForm();
     });
 
     document.getElementById('new-todo-btn').addEventListener('click', () => {
-      this.showTodoForm();
+      UI.showTodoForm();
     });
 
+    document.getElementById('add-checklist-item').addEventListener('click', () => {
+      UI.addChecklistItem();
+    });
+
+    // Form submissions
+    document.getElementById('project-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.handleProjectFormSubmit();
+    });
+
+    document.getElementById('todo-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.handleTodoFormSubmit();
+    });
+
+    // Custom events
     document.addEventListener('projectSelected', (e) => {
       this.currentProjectId = e.detail;
       this.render();
     });
+
+    document.addEventListener('viewTodo', (e) => {
+      UI.showTodoDetails(e.detail);
+    });
+
+    document.addEventListener('deleteTodo', (e) => {
+      this.deleteTodo(e.detail);
+    });
   }
 
-  addProject() {
-    const projectName = prompt('Enter project name:');
-    if (projectName) {
-      const newProject = new Project(projectName);
-      this.projects.push(newProject);
+  setupModalListeners() {
+    // Close modals when clicking on X
+    document.querySelectorAll('.close').forEach(closeBtn => {
+      closeBtn.addEventListener('click', () => {
+        const modal = closeBtn.closest('.modal');
+        modal.style.display = 'none';
+      });
+    });
+
+    // Close modals when clicking outside
+    window.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal')) {
+        e.target.style.display = 'none';
+      }
+    });
+  }
+
+  handleProjectFormSubmit() {
+    const nameInput = document.getElementById('project-name');
+    const name = nameInput.value.trim();
+    
+    if (name) {
+      this.addProject(name);
+      UI.hideModal('project-modal');
+    }
+  }
+
+  handleTodoFormSubmit() {
+    const title = document.getElementById('todo-title').value.trim();
+    const description = document.getElementById('todo-description').value.trim();
+    const dueDate = document.getElementById('todo-dueDate').value;
+    const priority = document.getElementById('todo-priority').value;
+    const notes = document.getElementById('todo-notes').value.trim();
+    
+    // Get checklist items
+    const checklist = [];
+    const checklistInputs = document.querySelectorAll('input[name="checklist[]"]');
+    checklistInputs.forEach(input => {
+      if (input.value.trim()) {
+        checklist.push({
+          text: input.value.trim(),
+          completed: false
+        });
+      }
+    });
+    
+    if (title && dueDate) {
+      const currentProject = this.getCurrentProject();
+      currentProject.addTodo([title, description, dueDate, priority, notes, checklist]);
+      Storage.saveProjects(this.projects);
+      this.render();
+      UI.hideModal('todo-modal');
+    }
+  }
+
+  addProject(name) {
+    const newProject = new Project(name);
+    this.projects.push(newProject);
+    Storage.saveProjects(this.projects);
+    this.render();
+  }
+
+  deleteTodo(todoId) {
+    if (confirm('Are you sure you want to delete this todo?')) {
+      const currentProject = this.getCurrentProject();
+      currentProject.deleteTodo(todoId);
       Storage.saveProjects(this.projects);
       this.render();
     }
@@ -64,21 +150,6 @@ class TodoApp {
     document.getElementById('current-project-title').textContent = currentProject.name;
     UI.renderProjects(this.projects, this.currentProjectId);
     UI.renderTodos(currentProject.todos);
-  }
-
-  showTodoForm() {
-    // Implement form to create new todo
-    const title = prompt('Todo title:');
-    const description = prompt('Description:');
-    const dueDate = prompt('Due date (YYYY-MM-DD):');
-    const priority = prompt('Priority (high/medium/low):');
-    
-    if (title && dueDate && priority) {
-      const currentProject = this.getCurrentProject();
-      currentProject.addTodo([title, description, dueDate, priority]);
-      Storage.saveProjects(this.projects);
-      this.render();
-    }
   }
 }
 
