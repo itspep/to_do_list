@@ -1,16 +1,16 @@
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const { merge } = require("webpack-merge");
-const common = require("./webpack.common.js");
+const { merge } = require('webpack-merge');
+const common = require('./webpack.common.js');
+const HtmlWebpackPlugin = require('html-webpack-plugin'); // Add this line
 
 module.exports = merge(common, {
-  mode: "production",
-  devtool: "source-map",
+  mode: 'production',
+  devtool: 'source-map',
   output: {
-    filename: "[name].[contenthash].js",
+    filename: '[name].[contenthash].js',
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: "./src/template.html",
+      template: './src/template.html',
       minify: {
         removeAttributeQuotes: true,
         collapseWhitespace: true,

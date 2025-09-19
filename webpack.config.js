@@ -14,9 +14,8 @@ module.exports = {
     watchFiles: ["./src/template.html"],
   },
   plugins: [
-    new HtmlWebpackPlugin({
-      template: "./src/template.html",
-    }),
+ 
+    
   ],
   module: {
     rules: [
